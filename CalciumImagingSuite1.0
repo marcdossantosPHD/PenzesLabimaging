@@ -1,0 +1,241 @@
+
+[row,column] = size(unnamed);
+
+counter=1;
+background=0;
+
+
+med= medfilt1(unnamed,100);
+norm=((unnamed-background)-(med-background))./(med-background);
+
+
+begining =1;
+
+[row,column] = size(norm);
+begining = 1;
+fin =row;
+timeScale=0.25 ;
+totalTime=(fin-begining)*timeScale ;
+
+for k=1:column
+smooth=norm(:,k);
+    smooth1 = wdenoise(smooth,3, ...
+    'Wavelet', 'sym4', ...
+    'DenoisingMethod', 'Bayes', ...
+    'ThresholdRule', 'Median', ...
+    'NoiseEstimate', 'LevelIndependent');
+    smoothed(:,k)= smooth1 (:,1);
+   
+    
+end
+
+
+
+for k=1:column
+calcium =smoothed(begining:fin,k) ;
+[Maxima,MaxIdx, Width, Prominence] = findpeaks(calcium,'MinPeakDistance',5,'MinPeakProminence',0.1);
+eval(['max' num2str(k) '= Maxima'])
+eval(['maxID' num2str(k) '= MaxIdx'])
+eval(['Prominence' num2str(k) '= Prominence'])
+eval(['Width' num2str(k) '= Width'])
+end
+
+for z= 1:column
+    TF = isempty(eval(['Prominence',num2str(z)]));
+  
+    if TF == 1
+    aProminence(z)=NaN;
+    else
+    temp=eval(['Prominence',num2str(z)]);
+    number = numel(temp);
+    aFrequency(z)=number;
+    end
+   
+end
+
+for z= 1:column
+    TF = isempty(eval(['Prominence',num2str(z)]));
+  
+    if TF == 1
+    aProminence(z)=NaN;
+    else
+    temp=eval(['max',num2str(z)]);
+    number = mean(temp);
+    aMax(z)=number;
+    maxmax(z)=max(aMax);
+    end
+   
+end
+
+for z= 1:column
+    TF = isempty(eval(['Prominence',num2str(z)]));
+  
+    if TF == 1
+    aProminence(z)=NaN;
+    else
+    temp=eval(['Prominence',num2str(z)]);
+    number = mean(temp);
+    aProminence=number;
+    end
+   
+end
+
+
+
+for z= 1:column
+    TF = isempty(eval(['Prominence',num2str(z)]));
+  
+    if TF == 1
+    aProminence(z)=NaN;
+    else
+    temp=eval(['Width',num2str(z)]);
+    number = mean(temp);
+    aWidth(z)=number*timeScale;
+    end
+   
+end
+
+ for z= 1:column
+    TF = isempty(eval(['max',num2str(z)]));
+  
+    if TF == 1
+    aProminence(z)=NaN;
+    else
+    temp=eval(['max',num2str(z)]);
+    number = mean(temp);
+    aMax(z)=number;
+    end
+   
+end
+
+nActiveCells=numel(~aWidth==0);
+FinalAll(:,1)=aFrequency;
+FinalAll(:,2)=aMax;
+FinalAll(:,3)=aWidth;
+FinalAll (:,4)=maxmax;
+
+
+%fulltable
+FinalTable(1)=nanmean(nonzeros(aFrequency));
+FinalTable(2)=nanmean(nonzeros(aWidth));
+FinalTable(3)= (sum(~aWidth==0))/column*100;
+FinalTable(4)=nanmean(nonzeros(aProminence));
+
+
+%%replace norm by the normalized table delta/F0
+%%
+% Q
+% * ITEM1
+% * ITEM2
+% 
+
+[row,column] = size(smoothed);
+for k=1:column
+calcium =smoothed(:,k) ;
+[Maxima,MaxIdx, Width, Prominence] = findpeaks(calcium,'MinPeakDistance',5,'MinPeakProminence',0.1);
+eval(['max' num2str(k) '= Maxima'])
+eval(['maxID' num2str(k) '= MaxIdx'])
+eval(['Prominence' num2str(k) '= Prominence'])
+eval(['Width' num2str(k) '= Width'])
+end
+
+for z= 1:column
+    for x = 1 : row
+    
+    
+        avide (x,z)=0;
+end
+end
+
+for z= 1:column
+    TF = isempty(eval(['maxID',num2str(z)]));
+    y = numel(eval(['maxID',num2str(z)]));
+    TableTemp = eval(['maxID',num2str(z)]);
+    if TF == 0   
+    for i = 1:y
+     temp=TableTemp (i);
+     avide(temp,z) = 1 ;
+    
+    end
+   end
+    
+end
+
+aSumEvents=sum(avide,2);
+aMovingSum = movsum( aSumEvents ,4 );
+aMaxSynchrony=max(aMovingSum);
+
+[row,column] = size(norm);
+begining =1;
+n = row;
+TABLE=norm(begining:n,1:column);
+R = corrcoef(TABLE,'Rows','pairwise')
+R(R==1) = NaN;
+m=mean(R,'omitnan');
+ameantotal=mean(m);
+
+
+for k=1:column
+calcium =smoothed(begining:fin,k) ;
+[Maxima,MaxIdx, Width, Prominence] = findpeaks(calcium,'MinPeakDistance',5,'MinPeakProminence',0.1);
+eval(['max' num2str(k) '= Maxima'])
+eval(['maxID' num2str(k) '= MaxIdx'])
+eval(['Prominence' num2str(k) '= Prominence'])
+eval(['Width' num2str(k) '= Width'])
+end
+
+
+
+
+
+
+for x=1:100
+     permuted=zeros(row,column);
+for z= 1:column
+    TableTemp = eval(['maxID',num2str(z)]); 
+     y = numel(eval(['maxID',num2str(z)]));
+     TF = isempty(eval(['maxID',num2str(z)]));
+     
+    if TF == 0  
+    temp =  randperm(row,y);
+    
+        for i = 1:y
+             permuted(temp,z) = 1 ;
+     
+        end
+    end
+end
+sumpermuted=sum(permuted,2);
+movsumpermuted=movsum(sumpermuted,4);
+aRandomTable(:,x)=movsumpermuted;
+
+
+end
+ 
+
+ 
+aThreshPerc=prctile(aRandomTable,99,2);
+aMeanPercentileThresh=mean(aThreshPerc);
+
+asyncPeaks=(numel(findpeaks(aMovingSum,'MinPeakDistance',10,'MinPeakHeight',aMeanPercentileThresh)));
+[aMaxima,aMaxIdx, aWidth, aProminence] = findpeaks(aMovingSum,'MinPeakHeight',aMeanPercentileThresh);
+MeanMaxSync = mean(aMaxima);
+aPercentFinal = MeanMaxSync / column *100 ;
+
+
+
+FinalTable(5)=NaN;
+FinalTable(6)=ameantotal;
+FinalTable(7)=NaN;
+FinalTable(8)=aMaxSynchrony/nActiveCells*100;
+FinalTable(9)=aPercentFinal;
+FinalTable(10)=asyncPeaks;
+FinalTable(11)=aMeanPercentileThresh;
+FinalTable(12)=mean(max(unnamed,[],1));
+FinalTable(13)=mean(min(unnamed,[],1));
+FinalTable(14)=timeScale*fin;
+FinalTable(15) =mean(maxmax);
+FinalTable(16) =row*timeScale;
+
+
+
